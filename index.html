@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moodboard Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            min-height: 100vh;
+            padding: 24px;
+            color: #e2e8f0;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            margin-bottom: 32px;
+        }
+
+        .header h1 {
+            font-size: 36px;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #94a3b8;
+            font-size: 16px;
+        }
+
+        /* Layout Selector */
+        .layout-selector {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 32px;
+        }
+
+        .layout-selector label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #cbd5e1;
+            margin-bottom: 12px;
+        }
+
+        .layout-selector select {
+            width: 100%;
+            max-width: 320px;
+            padding: 8px 12px;
+            background: #334155;
+            border: 1px solid #475569;
+            border-radius: 6px;
+            color: #ffffff;
+            font-size: 14px;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        .layout-selector select:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        /* Moodboard Container */
+        .moodboard-wrapper {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 32px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+            margin-bottom: 32px;
+        }
+
+        .moodboard-grid {
+            display: grid;
+            gap: 16px;
+            min-height: 600px;
+        }
+
+        /* Grid Layouts */
+        .grid-4-partition {
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+        }
+
+        .grid-8-partition {
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+        }
+
+        .grid-4x4-mixed {
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+        }
+
+        .grid-4x4-uniform {
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+        }
+
+        .grid-4x4-mixed-rect {
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+        }
+
+        .grid-left-large {
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+        }
+
+        .grid-right-large {
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+        }
+
+        .grid-16-equal {
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+        }
+
+        .grid-portrait-8 {
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+        }
+
+        .grid-portrait-16 {
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+        }
+
+        /* Partition */
+        .partition {
+            background: #334155;
+            border: 2px solid #475569;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            min-height: 120px;
+        }
+
+        .partition:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+        }
+
+        /* Partition Content */
+        .partition-content {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            position: relative;
+            background: #334155;
+        }
+
+        .partition-content img,
+        .partition-content video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .partition-content.has-image,
+        .partition-content.has-video {
+            background: transparent;
+        }
+
+        .partition-text {
+            color: #ffffff;
+            text-align: center;
+            font-size: 14px;
+            white-space: pre-wrap;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 6;
+            -webkit-box-orient: vertical;
+            z-index: 1;
+            max-width: 100%;
+        }
+
+        .empty-message {
+            color: #94a3b8;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        /* Overlay */
+        .partition-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            opacity: 0;
+            transition: background 0.3s, opacity 0.3s;
+            z-index: 10;
+        }
+
+        .partition:hover .partition-overlay {
+            background: rgba(0, 0, 0, 0.6);
+            opacity: 1;
+        }
+
+        .partition-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s, opacity 0.2s;
+            font-size: 20px;
+        }
+
+        .partition-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .btn-image {
+            background: #3b82f6;
+        }
+
+        .btn-image:hover {
+            background: #2563eb;
+        }
+
+        .btn-video {
+            background: #a855f7;
+        }
+
+        .btn-video:hover {
+            background: #9333ea;
+        }
+
+        .btn-text {
+            background: #10b981;
+        }
+
+        .btn-text:hover {
+            background: #059669;
+        }
+
+        .btn-clear {
+            background: #ef4444;
+        }
+
+        .btn-clear:hover {
+            background: #dc2626;
+        }
+
+        /* Size Variations */
+        .partition.size-large {
+            grid-column: span 2;
+            grid-row: span 2;
+        }
+
+        .partition.size-small {
+            grid-column: span 1;
+            grid-row: span 1;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            padding: 16px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 24px;
+            max-width: 420px;
+            width: 100%;
+        }
+
+        .modal-header {
+            font-size: 20px;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 16px;
+        }
+
+        .modal-textarea {
+            width: 100%;
+            height: 128px;
+            padding: 12px;
+            background: #334155;
+            border: 1px solid #475569;
+            border-radius: 6px;
+            color: #ffffff;
+            font-family: inherit;
+            font-size: 14px;
+            resize: none;
+            transition: border-color 0.3s;
+        }
+
+        .modal-textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .modal-btn-save {
+            background: #3b82f6;
+        }
+
+        .modal-btn-save:hover {
+            background: #2563eb;
+        }
+
+        .modal-btn-cancel {
+            background: #475569;
+        }
+
+        .modal-btn-cancel:hover {
+            background: #64748b;
+        }
+
+        /* Instructions */
+        .instructions {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 24px;
+        }
+
+        .instructions h3 {
+            color: #ffffff;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .instructions ul {
+            list-style: none;
+            color: #94a3b8;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .instructions li:before {
+            content: "• ";
+            margin-right: 8px;
+            color: #64748b;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body {
+                padding: 16px;
+            }
+
+            .container {
+                max-width: 100%;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .moodboard-wrapper {
+                padding: 16px;
+            }
+
+            .moodboard-grid {
+                gap: 12px;
+            }
+
+            .partition {
+                min-height: 100px;
+            }
+
+            .partition-btn {
+                width: 36px;
+                height: 36px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>     Moodboard Generator</h1>
+            <p>Create inspiring vision boards with multiple layouts</p>
+        </div>
+
+        <!-- Layout Selector -->
+        <div class="layout-selector">
+            <label for="layout-select">Select Layout</label>
+            <select id="layout-select">
+                <option value="4-partition">2x2 Square (4 Partitions)</option>
+                <option value="8-partition">2x4 Square (8 Partitions)</option>
+                <option value="4x4-mixed">4x4 Mixed (2 Large + 2 Small)</option>
+                <option value="4x4-uniform">4x4 Uniform Rectangles</option>
+                <option value="4x4-mixed-rect">4x4 Mixed Rectangles</option>
+                <option value="left-large">Left Large + 3 Small</option>
+                <option value="right-large">Right Large + 3 Small</option>
+                <option value="16-equal">16 Equal Sections</option>
+                <option value="portrait-8">Portrait 8 Sections</option>
+                <option value="portrait-16">Portrait 16 Sections</option>
+            </select>
+        </div>
+
+        <!-- Moodboard -->
+        <div class="moodboard-wrapper">
+            <div id="moodboard-grid" class="moodboard-grid grid-4-partition"></div>
+        </div>
+
+        
+        </div>
+
+    <!-- Modal -->
+    <div id="text-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Edit Text</div>
+            <textarea id="text-input" class="modal-textarea" placeholder="Enter your text..."></textarea>
+            <div class="modal-actions">
+                <button class="modal-btn modal-btn-save" onclick="saveText()">Save</button>
+                <button class="modal-btn modal-btn-cancel" onclick="closeModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const layouts = {
+            '4-partition': { grid: 'grid-4-partition', count: 4, sizes: [] },
+            '8-partition': { grid: 'grid-8-partition', count: 8, sizes: [] },
+            '4x4-mixed': { grid: 'grid-4x4-mixed', count: 6, sizes: [0, 1, 2, 3, 4, 5].map((i, idx) => idx < 2 ? 'large' : 'small') },
+            '4x4-uniform': { grid: 'grid-4x4-uniform', count: 16, sizes: [] },
+            '4x4-mixed-rect': { grid: 'grid-4x4-mixed-rect', count: 6, sizes: [0, 1, 2, 3, 4, 5].map((i, idx) => idx < 2 ? 'large' : 'small') },
+            'left-large': { grid: 'grid-left-large', count: 4, sizes: ['large', 'small', 'small', 'small'] },
+            'right-large': { grid: 'grid-right-large', count: 4, sizes: ['small', 'small', 'small', 'large'] },
+            '16-equal': { grid: 'grid-16-equal', count: 16, sizes: [] },
+            'portrait-8': { grid: 'grid-portrait-8', count: 8, sizes: [] },
+            'portrait-16': { grid: 'grid-portrait-16', count: 16, sizes: [] }
+        };
+
+        let partitions = {};
+        let currentLayout = '4-partition';
+        let editingId = null;
+
+        function getGridClasses(layout) {
+            return layouts[layout].grid;
+        }
+
+        function createPartitions(layout) {
+            const layoutConfig = layouts[layout];
+            const grid = document.getElementById('moodboard-grid');
+            
+            // Clear existing partitions
+            grid.innerHTML = '';
+            grid.className = `moodboard-grid ${layoutConfig.grid}`;
+            partitions = {};
+
+            for (let i = 0; i < layoutConfig.count; i++) {
+                const id = `partition-${i}`;
+                const partition = document.createElement('div');
+                partition.className = 'partition';
+                
+                if (layoutConfig.sizes[i] === 'large') {
+                    partition.classList.add('size-large');
+                }
+
+                partition.innerHTML = `
+                    <div class="partition-content">
+                        <div class="empty-message">Empty partition</div>
+                    </div>
+                    <div class="partition-overlay">
+                        <button class="partition-btn btn-image" onclick="addContent('${id}', 'image')" title="Add Image">🖼️</button>
+                        <button class="partition-btn btn-video" onclick="addContent('${id}', 'video')" title="Add Video">▶️</button>
+                        <button class="partition-btn btn-text" onclick="editText('${id}')" title="Edit Text">✎</button>
+                        <button class="partition-btn btn-clear" onclick="clearPartition('${id}')" title="Clear">✕</button>
+                    </div>
+                `;
+
+                grid.appendChild(partition);
+                partitions[id] = { image: null, video: null, text: null };
+            }
+        }
+
+        function addContent(id, type) {
+            const url = prompt(`Enter ${type} URL:`);
+            if (url) {
+                partitions[id][type] = url;
+                renderPartition(id);
+            }
+        }
+
+        function editText(id) {
+            editingId = id;
+            document.getElementById('text-input').value = partitions[id].text || '';
+            document.getElementById('text-modal').classList.add('active');
+        }
+
+        function saveText() {
+            if (editingId) {
+                partitions[editingId].text = document.getElementById('text-input').value;
+                renderPartition(editingId);
+                closeModal();
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('text-modal').classList.remove('active');
+            editingId = null;
+        }
+
+        function clearPartition(id) {
+            partitions[id] = { image: null, video: null, text: null };
+            renderPartition(id);
+        }
+
+    function renderPartition(id) {
+        const partition = partitions[id];
+        const element = document.querySelectorAll('.partition')[Object.keys(partitions).indexOf(id)];
+        const content = element.querySelector('.partition-content');
+
+        content.classList.remove('has-image', 'has-video');
+        content.innerHTML = '';
+
+    // IMAGE
+    if (partition.image) {
+        content.classList.add('has-image');
+        const img = document.createElement('img');
+        img.src = partition.image;
+        img.style.width = "100%";
+        img.style.height = "100%";
+        img.style.objectFit = "cover";
+        content.appendChild(img);
+        return;
+    }
+
+    // YOUTUBE DETECTION
+    if (partition.video && (partition.video.includes("youtube.com") || partition.video.includes("youtu.be"))) {
+        content.classList.add("has-video");
+
+        let videoUrl = partition.video.trim();
+        let videoId = "";
+
+        // 1. Standard YouTube URL
+        if (videoUrl.includes("watch?v=")) {
+            videoId = videoUrl.split("v=")[1].split("&")[0];
+        }
+        // 2. Short YouTube URL
+        else if (videoUrl.includes("youtu.be/")) {
+            videoId = videoUrl.split("youtu.be/")[1].split("?")[0];
+        }
+        // 3. Shorts URL
+        else if (videoUrl.includes("/shorts/")) {
+            videoId = videoUrl.split("/shorts/")[1].split("?")[0];
+        }
+
+        // If ID still empty → show error
+        if (!videoId) {
+            content.innerHTML = "<p style='color:red'>Invalid YouTube URL</p>";
+            return;
+        }
+
+        const iframe = document.createElement("iframe");
+        iframe.src = `https://www.youtube.com/embed/${videoId}`;
+        iframe.frameBorder = "0";
+        iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+        iframe.allowFullscreen = true;
+        iframe.style.width = "100%";
+        iframe.style.height = "100%";
+
+        content.appendChild(iframe);
+        return;
+    }
+
+    // MP4 VIDEO
+    if (partition.video && partition.video.startsWith("blob:")) {
+        content.classList.add('has-video');
+        const video = document.createElement('video');
+        video.src = partition.video;
+        video.controls = true;
+        video.style.width = "100%";
+        video.style.height = "100%";
+        content.appendChild(video);
+        return;
+    }
+
+    // TEXT
+    if (partition.text) {
+        const textDiv = document.createElement('div');
+        textDiv.className = 'partition-text';
+        textDiv.textContent = partition.text;
+        content.appendChild(textDiv);
+        return;
+    }
+
+    // EMPTY PART
+    content.innerHTML = '<div class="empty-message">Empty partition</div>';
+}
+
+
+
+
+        document.getElementById('layout-select').addEventListener('change', (e) => {
+            currentLayout = e.target.value;
+            createPartitions(currentLayout);
+        });
+
+        document.getElementById('text-modal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                closeModal();
+            }
+        });
+
+        // Initialize
+        createPartitions(currentLayout);
+        
+
+    </script>
+</body>
+</html>
